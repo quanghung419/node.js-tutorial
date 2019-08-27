@@ -33,7 +33,8 @@ program
     .option('-p, --port <number>', 'port number [9200]', '9200')
     .option('-j, --json', 'format output as JSON')
     .option('-i, --index <name>', 'which index to use')
-    .option('-t, --type <type>', 'default type for bulk operations');
+    .option('-t, --type <type>', 'default type for bulk operations')
+    .option('-f, --filter <filter>', 'source filter for query results');
 
 program
     .command('url [path]')
@@ -98,6 +99,25 @@ program
             stream.pipe(req);
             req.pipe(process.stdout);
         });
+    });
+
+program
+    .command('query [queries...]')
+    .alias('q')
+    .description('perform an Elasticsearch query')
+    .action((queries = []) => {
+        const options = {
+            url: fullUrl('_search'),
+            json: program.json,
+            qs: {},
+        };
+        if (queries && queries.length) {
+            options.qs.q = queries.join(' ');
+        }
+        if (program.filter) {
+            options.qs._source = program.filter;
+        }
+        request(options, handleResponse);
     });
 
 program.parse(process.argv);

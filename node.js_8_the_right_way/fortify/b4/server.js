@@ -55,6 +55,9 @@ passport.deserializeUser((user, done) => done(null, user));
 app.use(passport.initialize());
 app.use(passport.session());
 
+/**
+ * Authenticate by Facebook
+ */
 const FacebookStrategy = require('passport-facebook').Strategy;
 passport.use(
     new FacebookStrategy(
@@ -70,6 +73,33 @@ app.get('/auth/facebook', passport.authenticate('facebook'));
 app.get(
     '/auth/facebook/callback',
     passport.authenticate('facebook', {
+        successRedirect: '/',
+        failureRedirect: '/'
+    })
+);
+
+/**
+ * Authenticate by Google
+ */
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+passport.use(
+    new GoogleStrategy(
+        {
+            clientID: nconf.get('auth:google:clientID'),
+            clientSecret: nconf.get('auth:google:clientSecret'),
+            callbackURL: new URL('/auth/google/callback', serviceUrl).href,
+            scope: 'https://www.googleapis.com/auth/plus.login'
+        },
+        (accessToken, refreshToken, profile, done) => done(null, profile)
+    )
+);
+app.get(
+    '/auth/google',
+    passport.authenticate('google', { scope: ['email', 'profile'] })
+);
+app.get(
+    '/auth/google/callback',
+    passport.authenticate('google', {
         successRedirect: '/',
         failureRedirect: '/'
     })
